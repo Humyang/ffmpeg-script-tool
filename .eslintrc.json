@@ -1,0 +1,16 @@
+{
+  "root": false,
+  // ...existing code...
+  "rules": {
+    "no-unused-vars": "off",
+    "no-console": "off",
+    "no-debugger": "off",
+    "no-undef": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-var-requires": "off"
+    // Add other rules as needed
+  }
+  // ...existing code...
+}

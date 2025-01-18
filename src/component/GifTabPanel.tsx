@@ -54,7 +54,7 @@ const GifTabPanel = () => {
     dispatch(setGifConfig({ fps, scale, quality }));
   }, [fps, scale, quality]);
 
-  const handleQualityChange = (event) => {
+  const handleQualityChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setQuality(event.target.value);
   };
 
