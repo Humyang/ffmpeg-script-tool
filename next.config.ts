@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   devServer: {
     port: 3061, // Change this to your desired port number
   },
-  output: 'export'
+  // output: 'export'
 };
 
 export default nextConfig;
