@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
     "export": "next export",
+    "start": "PORT=3061 next start",
     "lint": "next lint"
   },
   "engines": {
