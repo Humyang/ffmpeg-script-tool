@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "export": "next export",
+    "build": "next build && next-sitemap",
     "start": "PORT=3061 next start",
     "lint": "next lint"
   },
@@ -25,6 +24,7 @@
     "@reduxjs/toolkit": "^2.5.0",
     "g": "^2.0.1",
     "next": "^15.1.4",
+    "next-sitemap": "^4.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-image-crop": "^11.0.7",
