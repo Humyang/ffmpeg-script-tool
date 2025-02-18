@@ -33,6 +33,8 @@ const UploadComponent = () => {
 
   return (
     <Box display="flex" alignItems="center" gap={2}>
+      
+      
       <Button
         variant="contained"
         component="label"

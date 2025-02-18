@@ -28,7 +28,7 @@ const OutputConfig = () => {
     <Box display="flex" flexDirection="row" gap={2}>
       <Box display="flex" alignContent="center" flexDirection="row" alignItems="center" gap={1} flexGrow={1}>
         <TextField
-          label="Output Name"
+          label="Output File Name"
           value={filename}
           onChange={handleFilenameChange}
           fullWidth
