@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Script from 'next/script';
+import Head from 'next/head'; // Import Head component
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -21,6 +22,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <>
+      <Head>
+        <title>FFmpeg Script Tool</title>
+        <meta name="description" content="A tool for generating FFmpeg scripts : splitting videos, cropping videos, and converting to GIF." />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=G-9MHHN25EKW`}

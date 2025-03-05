@@ -206,6 +206,7 @@ const SettingComponent = () => {
                 disabled={value !== 1}
                 crop={crop}
                 onChange={handleCropChange}
+                className="crop-container"
               >
                 <video
                   className="myvideo"

@@ -72,7 +72,7 @@ const GifTabPanel = () => {
         control={
           <Switch checked={gifEnabled} onChange={handleGifEnabledChange} />
         }
-        label="Enable GIF Settings"
+        label="Output GIF"
       />
       {gifEnabled && (
         <>

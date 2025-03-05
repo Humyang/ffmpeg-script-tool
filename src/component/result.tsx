@@ -9,12 +9,12 @@ const ResultComponent = () => {
   const crop = useSelector((state) => state.crop.crop);
   const time = useSelector((state) => state.time.times);
   const gif = useSelector((state) => state.gif);
-  const outName = useSelector((state) => state.fileDetails);
+  const fileDetails = useSelector((state) => state.fileDetails);
   const file = useSelector((state) => state.file);
   const [script, setScript] = useState("");
 
   useEffect(() => {
-    console.log("crop,time,gif,outName,file", crop, time, gif, outName, file);
+    console.log("crop,time,gif,outName,file", crop, time, gif, fileDetails, file);
     // 根据time生成ffmpeg 分隔视频脚本
     let outNameArr = [];
     let inputName = file.fileName.replace(/\.[^.]+$/, "");
@@ -23,14 +23,20 @@ const ResultComponent = () => {
     if (time.length > 1) {
       // const inputFilePath = file.path;
       const outputFilePath =
-        file.fileName.replace(/\.[^.]+$/, "") + "_" + outName.filename;
+        file.fileName.replace(/\.[^.]+$/, "") + "_" + fileDetails.filename;
       // 根据time生成ffmpeg分隔视频脚本，第一个是开始，第二个是结束以此类推
       let str = "";
+      if(fileDetails.outputDirectory!==''){
+        str = `mkdir -p "${fileDetails.outputDirectory}";`
+      }
       let index = 0;
       const ffmpegCommands = time.reduce((a, b) => {
         index++;
         let outName = `${outputFilePath}_split`;
-        str += `ffmpeg -i ${inputName}.${extName} -ss ${a} -to ${b} ${outName}.${extName} -y;`;
+        if(fileDetails.outputDirectory!==''){
+          outName = `${fileDetails.outputDirectory}/${outputFilePath}_split`;
+        }
+        str += `ffmpeg -i "${inputName}.${extName}" -ss ${a} -to ${b} "${outName}.${extName}" -y;`;
         // outNameArr.push(outName)
         inputName = outName;
         // if(index>0){
@@ -65,9 +71,9 @@ const ResultComponent = () => {
       cropVF = "-vf " + cropVF;
       let outName = `${inputName}_crop`;
       cropScript =
-        `ffmpeg -i ${inputName}.${extName} ` +
+        `ffmpeg -i "${inputName}.${extName}" ` +
         cropVF +
-        ` ${outName}.${extName} -y;`;
+        ` "${outName}.${extName}" -y;`;
       inputName = outName;
       script += cropScript;
     }
@@ -80,7 +86,7 @@ const ResultComponent = () => {
 
       let outName = `${inputName}_gif.gif`;
       let gifScript =
-        `ffmpeg -i ${inputName}.${extName} ` + gifVf + ` ${outName} -y;`;
+        `ffmpeg -i "${inputName}.${extName}" ` + gifVf + ` "${outName}" -y;`;
       // gifName = `${inputName}_gif.gif`
       inputName = inputName + "_gif";
       script += gifScript;
@@ -98,7 +104,7 @@ const ResultComponent = () => {
     //     inputName = inputName + "_crop";
     //   })
     // }
-  }, [crop, time, gif, outName, file]);
+  }, [crop, time, gif, fileDetails, file]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(script);

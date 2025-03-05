@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TextField, Box, Button } from '@mui/material';
-import { setFilename, setFileFormat, selectFilename, selectFileFormat } from '@/store/slices/fileDetailsSlice'; // Adjust the import path as necessary
+import { setFilename, setFileFormat, selectFilename, selectFileFormat, setOutputDirectory, selectOutputDirectory } from '@/store/slices/fileDetailsSlice'; // Adjust the import path as necessary
 
 const OutputConfig = () => {
   const dispatch = useDispatch();
   const filename = useSelector(selectFilename);
   const fileFormat = useSelector(selectFileFormat);
+  const outputDirectory = useSelector(selectOutputDirectory);
 
   const handleFilenameChange = (event) => {
     dispatch(setFilename(event.target.value));
@@ -14,6 +15,10 @@ const OutputConfig = () => {
 
   const handleFileFormatChange = (event) => {
     dispatch(setFileFormat(event.target.value));
+  };
+
+  const handleOutputDirectoryChange = (event) => {
+    dispatch(setOutputDirectory(event.target.value));
   };
 
   const generateRandomFilename = () => {
@@ -42,6 +47,16 @@ const OutputConfig = () => {
         >
           Random
         </Button>
+      </Box>
+      <Box display="flex" alignContent="center" flexDirection="row" alignItems="center" gap={1} flexGrow={1}>
+        <TextField
+          label="Output Directory"
+          value={outputDirectory}
+          onChange={handleOutputDirectoryChange}
+          fullWidth
+          margin="normal"
+          variant="standard"
+        />
       </Box>
       {/* <TextField
         label="Output Format"

@@ -19,3 +19,11 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* .myvideo{
+  max-width: 1000px;
+  max-height: 600px;
+} */
+.crop-container{
+  max-width: 1000px;
+  max-height: 600px;
+}
