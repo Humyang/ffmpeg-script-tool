@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Typography, Box, TextField, Button, Grid } from "@mui/material";
+import { Typography, Box, TextField, Button, Grid, IconButton } from "@mui/material";
+import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 
 
 const SlideshowConfig = () => {
-  const [images, setImages] = useState<{ url: string; duration: number }[]>([{ url: "", duration: 3 }]);
+  const [images, setImages] = useState<{ url: string; duration: number }[]>([]);
   const [command, setCommand] = useState<string>("");
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
@@ -16,12 +17,24 @@ const SlideshowConfig = () => {
     const files = event.target.files;
     if (files) {
       const newImages = Array.from(files).map(file => ({ url: file.name, duration: 3 }));
-      setImages(newImages);
+      setImages([...images, ...newImages]);
     }
   };
 
   const addImageField = () => {
     setImages([...images, { url: "", duration: 3 }]);
+  };
+
+  const removeImageField = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
+  };
+
+  const moveImageField = (index: number, direction: "up" | "down") => {
+    const newImages = [...images];
+    const [removed] = newImages.splice(index, 1);
+    newImages.splice(direction === "up" ? index - 1 : index + 1, 0, removed);
+    setImages(newImages);
   };
 
   const generateCommand = () => {
@@ -33,26 +46,19 @@ const SlideshowConfig = () => {
       return `ffmpeg -i ${_.url} -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2" ${inputName}_scale.${extName} -y;`;
     }).join("");
     const inputs = scaleImages.map((img, index) => `-loop 1 -t ${images[index].duration} -i ${img}`).join(" ");
-    let step = 0
+    let step = 0;
     const filters = images.map((_, index) => {
-      // if(index>=1){
-      if(images[index-1]){
-
-        step += images[index-1].duration
+      if (images[index - 1]) {
+        step += images[index - 1].duration;
       }
-      // }
-      return `[${index}]fade=d=1:t=in:alpha=1,setpts=PTS-STARTPTS+${index==0?0:step}/TB[f${index}];`
-    }
-    ).join(" ");
+      return `[${index}]fade=d=1:t=in:alpha=1,setpts=PTS-STARTPTS+${index === 0 ? 0 : step}/TB[f${index}];`;
+    }).join(" ");
     const firstOverlay = `[0][f0]overlay[bg0];`;
     const middleImages = images.slice(1, images.length - 1);
     const overlays = middleImages.map((_, index) => 
-      `[bg${index}][f${index+1}]overlay[bg${index+1}];`
+      `[bg${index}][f${index + 1}]overlay[bg${index + 1}];`
     ).join("");
-    let finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
-    // if(images.length === 2) {
-      // let finalOverlay = `,format=yuv420p[v]`;
-    // }
+    const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
 
     const ffmpegCommand = `${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 output-crossfade.mp4 -y`;
     setCommand(ffmpegCommand);
@@ -72,7 +78,7 @@ const SlideshowConfig = () => {
         </Grid>
         {images.map((image, index) => (
           <Grid container item xs={12} spacing={2} key={index}>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <TextField
                 label={`Image ${index + 1} URL`}
                 value={image.url}
@@ -80,7 +86,7 @@ const SlideshowConfig = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <TextField
                 label={`Image ${index + 1} Duration (seconds)`}
                 type="number"
@@ -89,13 +95,24 @@ const SlideshowConfig = () => {
                 fullWidth
               />
             </Grid>
+            <Grid item xs={4} container alignItems="center">
+              <IconButton onClick={() => moveImageField(index, "up")} disabled={index === 0}>
+                <ArrowUpward />
+              </IconButton>
+              <IconButton onClick={() => moveImageField(index, "down")} disabled={index === images.length - 1}>
+                <ArrowDownward />
+              </IconButton>
+              <IconButton onClick={() => removeImageField(index)}>
+                <Delete />
+              </IconButton>
+            </Grid>
           </Grid>
         ))}
-        <Grid item xs={12}>
+        {/* <Grid item xs={12}>
           <Button variant="contained" onClick={addImageField}>
             Add Image
           </Button>
-        </Grid>
+        </Grid> */}
         <Grid item xs={12}>
           <Button variant="contained" color="primary" onClick={generateCommand}>
             Generate Command
