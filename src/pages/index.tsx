@@ -4,7 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import UploadComponent from "@/component/upload";
 import ResultComponent from "@/component/result";
-import { Typography, Box, Button } from "@mui/material";
+import { Typography, Box, Button, Tabs, Tab } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SettingComponent from "@/component/setting";
 import { Provider } from "react-redux";
@@ -14,9 +14,17 @@ import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import OutputConfig from "@/component/OutputConfig"; // Adjust the import path as necessary
+import { useState } from "react";
+import SlideshowComponent from "@/component/SlideshowComponent";
+import VideoSplitCutConvert from "@/component/VideoSplitCutConvert";
 
 export default function Home() {
   const script = "echo 'This is a generated script'";
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedTab(newValue);
+  };
 
   return (
     <Provider store={store}>
@@ -56,47 +64,17 @@ export default function Home() {
           <Button color="inherit">Results</Button> */}
         </Toolbar>
       </AppBar>
-      <Box m={4}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Typography variant="h4" component="h2" gutterBottom>
-            Step1:Upload Video（mp4）
-            </Typography>
-          </Grid>
-          <h1></h1>
-          <Grid item xs={12}>
-            <UploadComponent />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h4" component="h2" gutterBottom>
-            Step2:Script Setting
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <SettingComponent />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h4" component="h2" gutterBottom>
-            Step3:Copy Generated Script 
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <OutputConfig />
-          </Grid>
-          <Grid item xs={12}>
-            <ResultComponent script={script} />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h4" component="h2" gutterBottom>
-            Step4:Paste the script into the git bash(or other terminal) and run it
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <Box display="flex" justifyContent="center" alignItems="center">
-              <img src="/example.gif" alt="Example Output"  />
-            </Box>
-          </Grid>
-        </Grid>
+      <Box m={1}>
+        <Tabs className="mb-4" value={selectedTab} onChange={handleTabChange}>
+          <Tab label="Video Split/Cut/Convert" />
+          <Tab label="Slideshow" />
+        </Tabs>
+        {selectedTab === 0 && (
+          <VideoSplitCutConvert script={script} />
+        )}
+        {selectedTab === 1 && (
+          <SlideshowComponent />
+        )}
       </Box>
     </Provider>
   );

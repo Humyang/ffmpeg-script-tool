@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Script from 'next/script';
 import Head from 'next/head'; // Import Head component
-
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 

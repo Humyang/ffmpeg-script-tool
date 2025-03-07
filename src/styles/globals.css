@@ -27,3 +27,7 @@ body {
   max-width: 1000px;
   max-height: 600px;
 }
+.command-output {
+  white-space: pre-wrap; /* Ensures text wraps properly */
+  word-wrap: break-word; /* Breaks long words to fit within the container */
+}
