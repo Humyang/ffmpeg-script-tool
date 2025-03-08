@@ -12,6 +12,7 @@ const SlideshowConfig = () => {
   const [scaleWidth, setScaleWidth] = useState<number>(1280);
   const [scaleHeight, setScaleHeight] = useState<number>(720);
   const [deleteIntermediateFiles, setDeleteIntermediateFiles] = useState<boolean>(false);
+  const [applyScale, setApplyScale] = useState<boolean>(true);
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
     const newImages = [...images];
@@ -47,13 +48,13 @@ const SlideshowConfig = () => {
 
   const generateCommand = () => {
     let scaleImages: string[] = [];
-    const scaleFilters = images.map((_, index) => {
+    const scaleFilters = applyScale ? images.map((_, index) => {
       let inputName = _.url.replace(/\.[^.]+$/, "");
       let extName = _.url.split(".").pop();
       scaleImages.push(`${inputName}_scale.${extName}`);
       return `ffmpeg -i ${_.url} -vf "scale=${scaleWidth}:${scaleHeight}:force_original_aspect_ratio=decrease,pad=${scaleWidth}:${scaleHeight}:(ow-iw)/2:(oh-ih)/2" ${inputName}_scale.${extName} -y;`;
-    }).join("");
-    const inputs = scaleImages.map((img, index) => `-loop 1 -t ${images[index].duration} -i ${img}`).join(" ");
+    }).join("") : "";
+    const inputs = (applyScale ? scaleImages : images.map(img => img.url)).map((img, index) => `-loop 1 -t ${images[index].duration} -i ${img}`).join(" ");
     let step = 0;
     const filters = images.map((_, index) => {
       if (images[index - 1]) {
@@ -89,7 +90,7 @@ const SlideshowConfig = () => {
     } else {
       setIsMounted(true);
     }
-  }, [images, fileDetails, scaleWidth, scaleHeight, deleteIntermediateFiles]);
+  }, [images, fileDetails, scaleWidth, scaleHeight, deleteIntermediateFiles, applyScale]);
 
   return (
     <Box>
@@ -137,6 +138,18 @@ const SlideshowConfig = () => {
         ))}
         {images.length > 1 && (
           <>
+          <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={applyScale}
+                    onChange={(e) => setApplyScale(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Apply Scale"
+              />
+            </Grid>
             <Grid item xs={6}>
               <TextField
                 label="Scale Width"
@@ -144,6 +157,7 @@ const SlideshowConfig = () => {
                 value={scaleWidth}
                 onChange={(e) => setScaleWidth(parseInt(e.target.value))}
                 fullWidth
+                disabled={!applyScale}
               />
             </Grid>
             <Grid item xs={6}>
@@ -153,8 +167,10 @@ const SlideshowConfig = () => {
                 value={scaleHeight}
                 onChange={(e) => setScaleHeight(parseInt(e.target.value))}
                 fullWidth
+                disabled={!applyScale}
               />
             </Grid>
+            
             <Grid item xs={12}>
               <FormControlLabel
                 control={
