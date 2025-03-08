@@ -9,6 +9,8 @@ const SlideshowConfig = () => {
   const [images, setImages] = useState<{ url: string; duration: number }[]>([]);
   const [command, setCommand] = useState<string>("");
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [scaleWidth, setScaleWidth] = useState<number>(1280);
+  const [scaleHeight, setScaleHeight] = useState<number>(720);
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
     const newImages = [...images];
@@ -48,7 +50,7 @@ const SlideshowConfig = () => {
       let inputName = _.url.replace(/\.[^.]+$/, "");
       let extName = _.url.split(".").pop();
       scaleImages.push(`${inputName}_scale.${extName}`);
-      return `ffmpeg -i ${_.url} -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2" ${inputName}_scale.${extName} -y;`;
+      return `ffmpeg -i ${_.url} -vf "scale=${scaleWidth}:${scaleHeight}:force_original_aspect_ratio=decrease,pad=${scaleWidth}:${scaleHeight}:(ow-iw)/2:(oh-ih)/2" ${inputName}_scale.${extName} -y;`;
     }).join("");
     const inputs = scaleImages.map((img, index) => `-loop 1 -t ${images[index].duration} -i ${img}`).join(" ");
     let step = 0;
@@ -85,7 +87,7 @@ const SlideshowConfig = () => {
     } else {
       setIsMounted(true);
     }
-  }, [images,fileDetails]);
+  }, [images,fileDetails, scaleWidth, scaleHeight]);
 
   return (
     <Box>
@@ -133,12 +135,30 @@ const SlideshowConfig = () => {
         ))}
         {images.length > 1 && (
           <>
-          <Grid item xs={12}>
-          <OutputConfig />
-        </Grid>
-          <Grid item xs={12}>
-            <ResultComponent script={command} />
-          </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Scale Width"
+                type="number"
+                value={scaleWidth}
+                onChange={(e) => setScaleWidth(parseInt(e.target.value))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Scale Height"
+                type="number"
+                value={scaleHeight}
+                onChange={(e) => setScaleHeight(parseInt(e.target.value))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <OutputConfig />
+            </Grid>
+            <Grid item xs={12}>
+              <ResultComponent script={command} />
+            </Grid>
           </>
         )}
       </Grid>
