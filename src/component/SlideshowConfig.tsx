@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Box, TextField, Button, Grid, IconButton } from "@mui/material";
+import { Typography, Box, TextField, Button, Grid, IconButton, Checkbox, FormControlLabel } from "@mui/material";
 import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import ResultComponent from "./result";
 import OutputConfig from "./OutputConfig";
@@ -11,6 +11,7 @@ const SlideshowConfig = () => {
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [scaleWidth, setScaleWidth] = useState<number>(1280);
   const [scaleHeight, setScaleHeight] = useState<number>(720);
+  const [deleteIntermediateFiles, setDeleteIntermediateFiles] = useState<boolean>(false);
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
     const newImages = [...images];
@@ -67,16 +68,17 @@ const SlideshowConfig = () => {
     ).join("");
     const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
     let str = "";
-      if(fileDetails.outputDirectory!==''){
-        str = `mkdir -p "${fileDetails.outputDirectory}";`
-      }
-      const outputFilePath = `${fileDetails.filename}.mp4`
-      
-      let outName = `${outputFilePath}`;
-        if(fileDetails.outputDirectory!==''){
-          outName = `${fileDetails.outputDirectory}/${outputFilePath}`;
-        }
-    const ffmpegCommand = `${str}${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 ${outName} -y`;
+    if(fileDetails.outputDirectory!==''){
+      str = `mkdir -p "${fileDetails.outputDirectory}";`
+    }
+    const outputFilePath = `${fileDetails.filename}.mp4`
+    
+    let outName = `${outputFilePath}`;
+    if(fileDetails.outputDirectory!==''){
+      outName = `${fileDetails.outputDirectory}/${outputFilePath}`;
+    }
+    const deleteCommands = deleteIntermediateFiles ? scaleImages.map(img => `rm ${img};`).join("") : "";
+    const ffmpegCommand = `${str}${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 ${outName} -y;${deleteCommands}`;
 
     setCommand(ffmpegCommand);
   };
@@ -87,7 +89,7 @@ const SlideshowConfig = () => {
     } else {
       setIsMounted(true);
     }
-  }, [images,fileDetails, scaleWidth, scaleHeight]);
+  }, [images, fileDetails, scaleWidth, scaleHeight, deleteIntermediateFiles]);
 
   return (
     <Box>
@@ -151,6 +153,18 @@ const SlideshowConfig = () => {
                 value={scaleHeight}
                 onChange={(e) => setScaleHeight(parseInt(e.target.value))}
                 fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={deleteIntermediateFiles}
+                    onChange={(e) => setDeleteIntermediateFiles(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Delete Intermediate Files"
               />
             </Grid>
             <Grid item xs={12}>
