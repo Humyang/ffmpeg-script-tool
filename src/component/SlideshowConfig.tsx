@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Typography, Box, TextField, Button, Grid, IconButton } from "@mui/material";
 import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
-
+import ResultComponent from "./result";
+import OutputConfig from "./OutputConfig";
+import { useSelector } from "react-redux";
 
 const SlideshowConfig = () => {
   const [images, setImages] = useState<{ url: string; duration: number }[]>([]);
   const [command, setCommand] = useState<string>("");
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
     const newImages = [...images];
@@ -37,6 +40,8 @@ const SlideshowConfig = () => {
     setImages(newImages);
   };
 
+  const fileDetails = useSelector((state) => state.fileDetails);
+
   const generateCommand = () => {
     let scaleImages: string[] = [];
     const scaleFilters = images.map((_, index) => {
@@ -59,10 +64,28 @@ const SlideshowConfig = () => {
       `[bg${index}][f${index + 1}]overlay[bg${index + 1}];`
     ).join("");
     const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
+    let str = "";
+      if(fileDetails.outputDirectory!==''){
+        str = `mkdir -p "${fileDetails.outputDirectory}";`
+      }
+      const outputFilePath = `${fileDetails.filename}.mp4`
+      
+      let outName = `${outputFilePath}`;
+        if(fileDetails.outputDirectory!==''){
+          outName = `${fileDetails.outputDirectory}/${outputFilePath}`;
+        }
+    const ffmpegCommand = `${str}${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 ${outName} -y`;
 
-    const ffmpegCommand = `${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 output-crossfade.mp4 -y`;
     setCommand(ffmpegCommand);
   };
+
+  useEffect(() => {
+    if (isMounted) {
+      generateCommand();
+    } else {
+      setIsMounted(true);
+    }
+  }, [images,fileDetails]);
 
   return (
     <Box>
@@ -108,21 +131,16 @@ const SlideshowConfig = () => {
             </Grid>
           </Grid>
         ))}
-        {/* <Grid item xs={12}>
-          <Button variant="contained" onClick={addImageField}>
-            Add Image
-          </Button>
-        </Grid> */}
-        <Grid item xs={12}>
-          <Button variant="contained" color="primary" onClick={generateCommand}>
-            Generate Command
-          </Button>
+        {images.length > 1 && (
+          <>
+          <Grid item xs={12}>
+          <OutputConfig />
         </Grid>
-        <Grid item xs={12}>
-          <Typography variant="body1" component="pre" className="command-output">
-            {command}
-          </Typography>
-        </Grid>
+          <Grid item xs={12}>
+            <ResultComponent script={command} />
+          </Grid>
+          </>
+        )}
       </Grid>
     </Box>
   );
