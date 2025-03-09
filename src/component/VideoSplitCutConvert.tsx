@@ -110,42 +110,57 @@ const VideoSplitCutConvert = () => {
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
-        <Typography variant="h4" component="h2" gutterBottom>
-          Step1: Upload Video (mp4)
+        
+        <Typography variant="body1" gutterBottom>
+          1. Upload a video file using the "Upload Video" button.
         </Typography>
+        
       </Grid>
+      
       <Grid item xs={12}>
         <UploadComponent />
       </Grid>
-      <Grid item xs={12}>
-        <Typography variant="h4" component="h2" gutterBottom>
-          Step2: Script Setting
-        </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <SettingComponent />
-      </Grid>
-      <Grid item xs={12}>
-        <Typography variant="h4" component="h2" gutterBottom>
-          Step3: Copy Generated Script
-        </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <OutputConfig />
-      </Grid>
-      <Grid item xs={12}>
-        <ResultComponent script={script} />
-      </Grid>
-      <Grid item xs={12}>
-        <Typography variant="h4" component="h2" gutterBottom>
-          Step4: Paste the script into the git bash (or other terminal) and run it
-        </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Box display="flex" justifyContent="center" alignItems="center">
-          <img src="/example.gif" alt="Example Output" />
-        </Box>
-      </Grid>
+    {
+      file.fileName!=""?(
+        <>
+        <Grid item xs={12}>
+        
+        <Typography variant="body1" gutterBottom>
+            2. Adjust the settings for splitting, cutting, or converting the video.
+          </Typography>
+          
+        </Grid>
+        <Grid item xs={12}>
+          <SettingComponent />
+        </Grid>
+        <Grid item xs={12}>
+          
+        <Typography variant="body1" gutterBottom>
+            3. Configure the output settings.
+          </Typography>
+          
+        </Grid>
+        <Grid item xs={12}>
+          <OutputConfig />
+        </Grid>
+        <Grid item xs={12}>
+          <ResultComponent script={script} />
+        </Grid>
+        <Grid item xs={12}>
+          
+        <Typography variant="body1" gutterBottom>
+            4. Copy the generated FFmpeg command and run it in your terminal.
+          </Typography>
+          
+        </Grid>
+        <Grid item xs={12}>
+          <Box display="flex" justifyContent="center" alignItems="center">
+            <img src="/example.gif" alt="Example Output" />
+          </Box>
+        </Grid>
+        </>
+      ):null
+    }
     </Grid>
   );
 };

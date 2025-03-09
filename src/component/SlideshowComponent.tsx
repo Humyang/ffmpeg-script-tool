@@ -5,9 +5,7 @@ import SlideshowConfig from "@/component/SlideshowConfig";
 const SlideshowComponent = () => {
   return (
     <Box>
-      <Typography variant="h4" component="h2" gutterBottom>
-        Slideshow Feature
-      </Typography>
+      
       <SlideshowConfig />
     </Box>
   );
