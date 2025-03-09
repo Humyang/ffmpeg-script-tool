@@ -6,12 +6,12 @@ import OutputConfig from "./OutputConfig";
 import { useSelector } from "react-redux";
 
 const SlideshowConfig = () => {
-  const [images, setImages] = useState<{ url: string; duration: number }[]>([]);
+  const [images, setImages] = useState<{ url: string; duration: number; fade: number }[]>([]);
   const [command, setCommand] = useState<string>("");
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [scaleWidth, setScaleWidth] = useState<number>(1280);
   const [scaleHeight, setScaleHeight] = useState<number>(720);
-  const [deleteIntermediateFiles, setDeleteIntermediateFiles] = useState<boolean>(false);
+  const [deleteIntermediateFiles, setDeleteIntermediateFiles] = useState<boolean>(true);
   const [applyScale, setApplyScale] = useState<boolean>(true);
 
   const handleImageChange = (index: number, field: string, value: string | number) => {
@@ -23,13 +23,13 @@ const SlideshowConfig = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newImages = Array.from(files).map(file => ({ url: file.name, duration: 3 }));
+      const newImages = Array.from(files).map(file => ({ url: file.name, duration: 3, fade: 1 }));
       setImages([...images, ...newImages]);
     }
   };
 
   const addImageField = () => {
-    setImages([...images, { url: "", duration: 3 }]);
+    setImages([...images, { url: "", duration: 3, fade: 1 }]);
   };
 
   const removeImageField = (index: number) => {
@@ -60,22 +60,22 @@ const SlideshowConfig = () => {
       if (images[index - 1]) {
         step += images[index - 1].duration;
       }
-      return `[${index}]fade=d=1:t=in:alpha=1,setpts=PTS-STARTPTS+${index === 0 ? 0 : step}/TB[f${index}];`;
+      return `[${index}]fade=d=${_.fade}:t=in:alpha=1,setpts=PTS-STARTPTS+${index === 0 ? 0 : step}/TB[f${index}];`;
     }).join(" ");
     const firstOverlay = `[0][f0]overlay[bg0];`;
     const middleImages = images.slice(1, images.length - 1);
-    const overlays = middleImages.map((_, index) => 
+    const overlays = middleImages.map((_, index) =>
       `[bg${index}][f${index + 1}]overlay[bg${index + 1}];`
     ).join("");
     const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
     let str = "";
-    if(fileDetails.outputDirectory!==''){
+    if (fileDetails.outputDirectory !== '') {
       str = `mkdir -p "${fileDetails.outputDirectory}";`
     }
     const outputFilePath = `${fileDetails.filename}.mp4`
-    
+
     let outName = `${outputFilePath}`;
-    if(fileDetails.outputDirectory!==''){
+    if (fileDetails.outputDirectory !== '') {
       outName = `${fileDetails.outputDirectory}/${outputFilePath}`;
     }
     const deleteCommands = deleteIntermediateFiles ? scaleImages.map(img => `rm ${img};`).join("") : "";
@@ -94,9 +94,12 @@ const SlideshowConfig = () => {
 
   return (
     <Box>
-      <Typography variant="h4" component="h2" gutterBottom>
-        Configure Slideshow
+      
+      <Typography variant="body1" gutterBottom>
+        1. Upload images using the "Upload Images" button（least two images）.
       </Typography>
+
+
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Button variant="contained" component="label">
@@ -104,9 +107,17 @@ const SlideshowConfig = () => {
             <input type="file" multiple hidden onChange={handleFileUpload} />
           </Button>
         </Grid>
+        {images.length > 1 && (
+          <Grid item xs={12}>
+            <Typography variant="body1" gutterBottom>
+              2. Adjust the duration and fade time for each image.
+            </Typography>
+          </Grid>
+        )}
+
         {images.map((image, index) => (
           <Grid container item xs={12} spacing={2} key={index}>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <TextField
                 label={`Image ${index + 1} URL`}
                 value={image.url}
@@ -114,7 +125,7 @@ const SlideshowConfig = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <TextField
                 label={`Image ${index + 1} Duration (seconds)`}
                 type="number"
@@ -123,7 +134,16 @@ const SlideshowConfig = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={4} container alignItems="center">
+            <Grid item xs={3}>
+              <TextField
+                label={`Image ${index + 1} Fade Duration (seconds)`}
+                type="number"
+                value={image.fade}
+                onChange={(e) => handleImageChange(index, "fade", parseInt(e.target.value))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={3} container alignItems="center">
               <IconButton onClick={() => moveImageField(index, "up")} disabled={index === 0}>
                 <ArrowUpward />
               </IconButton>
@@ -138,7 +158,12 @@ const SlideshowConfig = () => {
         ))}
         {images.length > 1 && (
           <>
-          <Grid item xs={12}>
+            <Grid item xs={12}>
+              <Typography variant="body1" gutterBottom>
+                3. Optionally, set the scale dimensions and choose whether to apply the scale.
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -170,7 +195,11 @@ const SlideshowConfig = () => {
                 disabled={!applyScale}
               />
             </Grid>
-            
+            <Grid item xs={12}>
+              <Typography variant="body1" gutterBottom>
+                4. Optionally, choose whether to delete intermediate files.
+              </Typography>
+            </Grid>
             <Grid item xs={12}>
               <FormControlLabel
                 control={
@@ -183,8 +212,21 @@ const SlideshowConfig = () => {
                 label="Delete Intermediate Files"
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="body1" gutterBottom>
+                5. Configure the output settings.
+              </Typography>
+            </Grid>
+
+
             <Grid item xs={12}>
               <OutputConfig />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body1" gutterBottom>
+                6. Copy the generated FFmpeg command and run it in your terminal.
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <ResultComponent script={command} />
