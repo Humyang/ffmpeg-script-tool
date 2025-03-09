@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Box, TextField, Button, Grid, IconButton, Checkbox, FormControlLabel } from "@mui/material";
+import { Typography, Box, TextField, Button, Grid, IconButton, Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
 import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import ResultComponent from "./result";
 import OutputConfig from "./OutputConfig";
 import { useSelector } from "react-redux";
 
+const xfadeOptions = [
+  "fade", "wipeleft", "wiperight", "wipeup", "wipedown", "slideleft", "slideright", "slideup", "slidedown",
+  "circlecrop", "rectcrop", "distance", "fadeblack", "fadewhite", "radial", "smoothleft", "smoothright",
+  "smoothup", "smoothdown", "circleopen", "circleclose", "vertopen", "vertclose", "horzopen", "horzclose",
+  "dissolve", "pixelize", "diagtl", "diagtr", "diagbl", "diagbr", "hlslice", "hrslice", "vuslice", "vdslice",
+  "hblur", "fadegrays", "wipetl", "wipetr", "wipebl", "wipebr", "squeezeh", "squeezev", "zoomin",
+  "fadefast", "fadeslow", "hlwind", "hrwind", "vuwind", "vdwind", "coverleft", "coverright", "coverup",
+  "coverdown", "revealleft", "revealright", "revealup", "revealdown"
+];
+
 const SlideshowConfig = () => {
-  const [images, setImages] = useState<{ url: string; duration: number; fade: number }[]>([]);
+  const [images, setImages] = useState<{ url: string; duration: number; fade: number; xfade: string; xfadeOptions?: any }[]>([]);
   const [command, setCommand] = useState<string>("");
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [scaleWidth, setScaleWidth] = useState<number>(1280);
@@ -23,13 +33,13 @@ const SlideshowConfig = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newImages = Array.from(files).map(file => ({ url: file.name, duration: 3, fade: 1 }));
+      const newImages = Array.from(files).map(file => ({ url: file.name, duration: 1, fade: 0.5, xfade: "fade" }));
       setImages([...images, ...newImages]);
     }
   };
 
   const addImageField = () => {
-    setImages([...images, { url: "", duration: 3, fade: 1 }]);
+    setImages([...images, { url: "", duration: 3, fade: 1, xfade: "fade" }]);
   };
 
   const removeImageField = (index: number) => {
@@ -52,34 +62,46 @@ const SlideshowConfig = () => {
       let inputName = _.url.replace(/\.[^.]+$/, "");
       let extName = _.url.split(".").pop();
       scaleImages.push(`${inputName}_scale.${extName}`);
-      return `ffmpeg -i ${_.url} -vf "scale=${scaleWidth}:${scaleHeight}:force_original_aspect_ratio=decrease,pad=${scaleWidth}:${scaleHeight}:(ow-iw)/2:(oh-ih)/2" ${inputName}_scale.${extName} -y;`;
+      return `ffmpeg -i "${_.url}" -vf "scale=${scaleWidth}:${scaleHeight}:force_original_aspect_ratio=decrease,pad=${scaleWidth}:${scaleHeight}:(ow-iw)/2:(oh-ih)/2" "${inputName}_scale.${extName}" -y;`;
     }).join("") : "";
-    const inputs = (applyScale ? scaleImages : images.map(img => img.url)).map((img, index) => `-loop 1 -t ${images[index].duration} -i ${img}`).join(" ");
+    const inputs = (applyScale ? scaleImages : images.map(img => img.url)).map((img, index) => `-loop 1 -t ${images[index].duration} -i "${img}"`).join(" ");
     let step = 0;
-    const filters = images.map((_, index) => {
-      if (images[index - 1]) {
-        step += images[index - 1].duration;
+    let accFadeTime = 0
+    let accDuration = 0
+    let filters = images.map((_, index) => {
+      accDuration+=_.duration
+      accFadeTime+=_.fade
+      // if (images[index - 1]) {
+      //   step += images[index - 1].duration;
+      // }
+      if(index === images.length - 1){
+        return "";
       }
-      return `[${index}]fade=d=${_.fade}:t=in:alpha=1,setpts=PTS-STARTPTS+${index === 0 ? 0 : step}/TB[f${index}];`;
-    }).join(" ");
-    const firstOverlay = `[0][f0]overlay[bg0];`;
-    const middleImages = images.slice(1, images.length - 1);
-    const overlays = middleImages.map((_, index) =>
-      `[bg${index}][f${index + 1}]overlay[bg${index + 1}];`
-    ).join("");
-    const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
+      // xfade=transition=fade:duration=1:offset=3
+      // return `[${index==0?0:'f'+(index-1)}][${index+1}]xfade=transition=slideleft:duration=1:offset=4[f${index}];`;
+      return `[${index==0?0:'f'+(index-1)}][${index+1}]xfade=transition=${_.xfade}:duration=${_.fade}:offset=${accDuration-accFadeTime}[f${index}]`;
+    }).join(";");
+    // console.log(filters);
+    filters = filters.slice(0, -1);
+    // const firstOverlay = `[0][f0]overlay[bg0];`;
+    // const middleImages = images.slice(1, images.length - 1);
+    // const overlays = middleImages.map((_, index) => 
+    //   `[bg${index}][f${index + 1}]overlay[bg${index + 1}];`
+    // ).join("");
+    // const finalOverlay = `[bg${images.length - 2}][f${images.length - 1}]overlay,format=yuv420p[v]`;
     let str = "";
-    if (fileDetails.outputDirectory !== '') {
+    if(fileDetails.outputDirectory!==''){
       str = `mkdir -p "${fileDetails.outputDirectory}";`
     }
     const outputFilePath = `${fileDetails.filename}.mp4`
-
+    
     let outName = `${outputFilePath}`;
-    if (fileDetails.outputDirectory !== '') {
+    if(fileDetails.outputDirectory!==''){
       outName = `${fileDetails.outputDirectory}/${outputFilePath}`;
     }
     const deleteCommands = deleteIntermediateFiles ? scaleImages.map(img => `rm ${img};`).join("") : "";
-    const ffmpegCommand = `${str}${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters} ${firstOverlay} ${overlays} ${finalOverlay}" -map "[v]" -r 25 ${outName} -y;${deleteCommands}`;
+    // ${firstOverlay} ${overlays} ${finalOverlay}"
+    const ffmpegCommand = `${str}${scaleFilters} ffmpeg ${inputs} -filter_complex "${filters}"  -map "[f${images.length-2}]" -r 25 -pix_fmt yuv420p -vcodec libx264 ${outName}  -y;${deleteCommands}`;
 
     setCommand(ffmpegCommand);
   };
@@ -94,12 +116,12 @@ const SlideshowConfig = () => {
 
   return (
     <Box>
-      
+      <Typography variant="h4" component="h2" gutterBottom>
+        Configure Slideshow
+      </Typography>
       <Typography variant="body1" gutterBottom>
         1. Upload images using the "Upload Images" button（least two images）.
       </Typography>
-
-
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Button variant="contained" component="label">
@@ -110,14 +132,13 @@ const SlideshowConfig = () => {
         {images.length > 1 && (
           <Grid item xs={12}>
             <Typography variant="body1" gutterBottom>
-              2. Adjust the duration and fade time for each image.
+              2. Adjust the duration, fade time, and xfade effect for each image.
             </Typography>
           </Grid>
         )}
-
         {images.map((image, index) => (
           <Grid container item xs={12} spacing={2} key={index}>
-            <Grid item xs={3}>
+            <Grid item xs={2}>
               <TextField
                 label={`Image ${index + 1} URL`}
                 value={image.url}
@@ -125,25 +146,42 @@ const SlideshowConfig = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2}>
+              <Select
+                label={`Image ${index + 1} Xfade Effect`}
+                value={image.xfade}
+                onChange={(e) => handleImageChange(index, "xfade", e.target.value as string)}
+                fullWidth
+              >
+                {xfadeOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+            <Grid item xs={2}>
               <TextField
                 label={`Image ${index + 1} Duration (seconds)`}
                 type="number"
+                inputProps={{ step: "0.1" }}
                 value={image.duration}
-                onChange={(e) => handleImageChange(index, "duration", parseInt(e.target.value))}
+                onChange={(e) => handleImageChange(index, "duration", parseFloat(e.target.value))}
                 fullWidth
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2}>
               <TextField
-                label={`Image ${index + 1} Fade Duration (seconds)`}
+                label={`Image ${index + 1} ${image.xfade} Duration (seconds)`}
                 type="number"
+                inputProps={{ step: "0.1" }}
                 value={image.fade}
-                onChange={(e) => handleImageChange(index, "fade", parseInt(e.target.value))}
+                
+                onChange={(e) => handleImageChange(index, "fade", parseFloat(e.target.value))}
                 fullWidth
               />
             </Grid>
-            <Grid item xs={3} container alignItems="center">
+            <Grid item xs={4} container alignItems="center">
               <IconButton onClick={() => moveImageField(index, "up")} disabled={index === 0}>
                 <ArrowUpward />
               </IconButton>
@@ -154,6 +192,8 @@ const SlideshowConfig = () => {
                 <Delete />
               </IconButton>
             </Grid>
+            
+            {/* Add more conditional fields for other xfade effects as needed */}
           </Grid>
         ))}
         {images.length > 1 && (
@@ -179,8 +219,9 @@ const SlideshowConfig = () => {
               <TextField
                 label="Scale Width"
                 type="number"
+                inputProps={{ step: "0.1" }}
                 value={scaleWidth}
-                onChange={(e) => setScaleWidth(parseInt(e.target.value))}
+                onChange={(e) => setScaleWidth(parseFloat(e.target.value))}
                 fullWidth
                 disabled={!applyScale}
               />
@@ -189,8 +230,9 @@ const SlideshowConfig = () => {
               <TextField
                 label="Scale Height"
                 type="number"
+                inputProps={{ step: "0.1" }}
                 value={scaleHeight}
-                onChange={(e) => setScaleHeight(parseInt(e.target.value))}
+                onChange={(e) => setScaleHeight(parseFloat(e.target.value))}
                 fullWidth
                 disabled={!applyScale}
               />
@@ -212,14 +254,11 @@ const SlideshowConfig = () => {
                 label="Delete Intermediate Files"
               />
             </Grid>
-
             <Grid item xs={12}>
               <Typography variant="body1" gutterBottom>
                 5. Configure the output settings.
               </Typography>
             </Grid>
-
-
             <Grid item xs={12}>
               <OutputConfig />
             </Grid>
