@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Box, TextField, Button, Grid, IconButton, Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
+import { Typography, Box, TextField, Button, Grid, IconButton, Checkbox, FormControlLabel, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import ResultComponent from "./result";
 import OutputConfig from "./OutputConfig";
@@ -51,6 +51,22 @@ const SlideshowConfig = () => {
     const newImages = [...images];
     const [removed] = newImages.splice(index, 1);
     newImages.splice(direction === "up" ? index - 1 : index + 1, 0, removed);
+    setImages(newImages);
+  };
+
+  const updateAllImages = (field: string, value: string | number) => {
+    const newImages = images.map(image => ({
+      ...image,
+      [field]: value
+    }));
+    setImages(newImages);
+  };
+
+  const randomizeXfadeOptions = () => {
+    const newImages = images.map(image => ({
+      ...image,
+      xfade: xfadeOptions[Math.floor(Math.random() * xfadeOptions.length)]
+    }));
     setImages(newImages);
   };
 
@@ -120,7 +136,7 @@ const SlideshowConfig = () => {
         Configure Slideshow
       </Typography>
       <Typography variant="body1" gutterBottom>
-        1. Upload images using the "Upload Images" button（least two images）.
+        1. Upload images using the "Upload Images" button（At least two pictures）.
       </Typography>
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -132,23 +148,78 @@ const SlideshowConfig = () => {
         {images.length > 1 && (
           <Grid item xs={12}>
             <Typography variant="body1" gutterBottom>
-              2. Adjust the duration, fade time, and xfade effect for each image.
+              2. Adjust the duration, fade time, and xfade effect for each image（Make sure ffmpeg is the latest version for some effect.）.
             </Typography>
           </Grid>
+        )}
+        {images.length > 1 && (
+        <>
+        <Grid item xs={12}>
+              <Button variant="contained" onClick={randomizeXfadeOptions}>
+                Randomize Xfade Options
+              </Button>
+            </Grid>
+          <Grid container item xs={12} spacing={2}>
+            <Grid item xs={2}>
+              {/* <TextField
+                label="Update All URLs"
+                onChange={(e) => updateAllImages("url", e.target.value)}
+                fullWidth
+              /> */}
+            </Grid>
+            <Grid item xs={2}>
+              <FormControl fullWidth>
+                <InputLabel>Update All Xfade Effect</InputLabel>
+                <Select
+                  value=""
+                  onChange={(e) => updateAllImages("xfade", e.target.value as string)}
+                  fullWidth
+                >
+                  {xfadeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                label="Update All Durations (seconds)"
+                type="number"
+                inputProps={{ step: "0.1" }}
+                onChange={(e) => updateAllImages("duration", parseFloat(e.target.value))}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                label="Update All Fade Durations (seconds)"
+                type="number"
+                inputProps={{ step: "0.1" }}
+                onChange={(e) => updateAllImages("fade", parseFloat(e.target.value))}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+          </>
         )}
         {images.map((image, index) => (
           <Grid container item xs={12} spacing={2} key={index}>
             <Grid item xs={2}>
               <TextField
-                label={`Image ${index + 1} URL`}
+                label={`Image ${index + 1} File Name`}
                 value={image.url}
                 onChange={(e) => handleImageChange(index, "url", e.target.value)}
                 fullWidth
               />
             </Grid>
             <Grid item xs={2}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Xfade Effect</InputLabel>
               <Select
-                label={`Image ${index + 1} Xfade Effect`}
+              labelId="demo-simple-select-label"
+                label={`Xfade Effect`}
                 value={image.xfade}
                 onChange={(e) => handleImageChange(index, "xfade", e.target.value as string)}
                 fullWidth
@@ -159,10 +230,25 @@ const SlideshowConfig = () => {
                   </MenuItem>
                 ))}
               </Select>
+              </FormControl>
+            {/* <InputLabel id="demo-simple-select-label">Age</InputLabel>
+              <Select
+              labelId="demo-simple-select-label"
+                label={`Xfade Effect`}
+                value={image.xfade}
+                onChange={(e) => handleImageChange(index, "xfade", e.target.value as string)}
+                fullWidth
+              >
+                {xfadeOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select> */}
             </Grid>
             <Grid item xs={2}>
               <TextField
-                label={`Image ${index + 1} Duration (seconds)`}
+                label={`Duration (seconds)`}
                 type="number"
                 inputProps={{ step: "0.1" }}
                 value={image.duration}
@@ -172,7 +258,7 @@ const SlideshowConfig = () => {
             </Grid>
             <Grid item xs={2}>
               <TextField
-                label={`Image ${index + 1} ${image.xfade} Duration (seconds)`}
+                label={`${image.xfade} Duration (seconds)`}
                 type="number"
                 inputProps={{ step: "0.1" }}
                 value={image.fade}
@@ -195,12 +281,14 @@ const SlideshowConfig = () => {
             
             {/* Add more conditional fields for other xfade effects as needed */}
           </Grid>
+          
         ))}
         {images.length > 1 && (
           <>
+            
             <Grid item xs={12}>
               <Typography variant="body1" gutterBottom>
-                3. Optionally, set the scale dimensions and choose whether to apply the scale.
+                3. Optionally, set the scale dimensions and choose whether to apply the scale（If the pictures are different sizes, check this to make them the same.）.
               </Typography>
             </Grid>
             <Grid item xs={12}>
