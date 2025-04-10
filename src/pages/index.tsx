@@ -17,6 +17,7 @@ import OutputConfig from "@/component/OutputConfig"; // Adjust the import path a
 import { useState } from "react";
 import SlideshowComponent from "@/component/SlideshowComponent";
 import VideoSplitCutConvert from "@/component/VideoSplitCutConvert";
+import ImageCropComponent from "@/component/ImageCropComponent"; // Import the new component
 
 export default function Home() {
   const script = "echo 'This is a generated script'";
@@ -68,6 +69,7 @@ export default function Home() {
         <Tabs className="mb-4" value={selectedTab} onChange={handleTabChange}>
           <Tab label="Video Split/Cut/Convert" />
           <Tab label="Slideshow" />
+          <Tab label="Image Crop" /> {/* Add new tab */}
         </Tabs>
         {selectedTab === 0 && (
           <VideoSplitCutConvert script={script} />
@@ -75,6 +77,9 @@ export default function Home() {
         {selectedTab === 1 && (
           <SlideshowComponent />
         )}
+        {selectedTab === 2 && (
+          <ImageCropComponent />
+        )} {/* Render new component */}
       </Box>
     </Provider>
   );
